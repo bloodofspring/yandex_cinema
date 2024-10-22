@@ -7,29 +7,27 @@ from database.models import Cinemas, Halls, Sessions
 
 
 class BaseOperationController:
-    def __init__(self, m_type: type[Model], model: Model, data: dict[str, Any] | None = None) -> None:
-        self.type = m_type
+    type: Model | None = None
+    def __init__(self, model: Model, data: dict[str, Any] | None = None) -> None:
         self.model = model
 
-        for k, v in zip(data.keys(), data.values()):
-            self.__dict__[k] = v
-
-        del self.__dict__['_dirty']
-        del self.__dict__['__rel__']
+        for k in data:
+            setattr(self, k, data[k])
 
     def __call__(self, *args, **kwargs):
         return type(self)(*args, **kwargs)
 
-    def get(self, o_id: int | None = None) -> Self:
-        model = self.type.get_by_id(o_id)
-        return self(m_type=self.type, model=model, data=model.__dict__)
+    @classmethod
+    def get(cls, o_id: int | None = None) -> Self:
+        model = cls.type.get_by_id(o_id)
+        return cls(model=model, data=model.__dict__["__data__"])
 
     @property
     def db(self):
         return self.model
 
     def drop(self):
-        self.type.delete_by_id(self.model.ID)
+        self.type.delete_by_id(self.ID)
 
     @classmethod
     def new(cls) -> Self:
@@ -40,10 +38,7 @@ class BaseOperationController:
 
 
 class SessionOC(BaseOperationController):
-    def __init__(self, model: Model, data=None, **_):
-        if data is None:
-            data = self.__dict__
-        super().__init__(m_type=Sessions, model=model, data=data)
+    type = Sessions
 
     @classmethod
     def new(cls) -> Self:
@@ -57,27 +52,20 @@ class SessionOC(BaseOperationController):
         }
         new = Sessions.create(**data)
 
-        return cls(model=new, data=new.__dict__)
+        return cls(model=new, data=new.__dict__.get("dict"))
 
     def __str__(self) -> str:
-        d = self.__dict__
-        del d["o_id"]
-        del d["db_cls"]
-        del d["hall"]
-
         return (
             "СЕАНС НА ФИЛЬМ {}"
             "\nВремя начала: {}"
-            "\nДлительность: {}".format(
-                *d.values()
+            "\nДлительность: {} минут"
+            "\nID зала: {}".format(
+                self.film_name, self.starts_at, self.duration, Halls(ID=self.hall).ID
         ))
 
 
 class HallOC(BaseOperationController):
-    def __init__(self, model: Model, data=None, **_):
-        if data is None:
-            data = self.__dict__
-        super().__init__(m_type=Halls, model=model, data=data)
+    type = Halls
 
     @classmethod
     def new(cls) -> Self:
@@ -88,35 +76,38 @@ class HallOC(BaseOperationController):
         data["config_json"] = json.dumps([[False for _ in range(n)] for _ in range(m)])
         new = Halls.create(**data)
 
-        return cls(model=new, data=new.__dict__)
+        return cls(model=new, data=new.__dict__.get("__dict__"))
 
     def __str__(self) -> str:
         return (
             "ЗАЛ ID={}"
             "\nБлижайшие сеансы: {}".format(
                 self.db.ID,
-                "\n".join(map(str, map(SessionOC.get, map(lambda x: x.ID, Sessions.select().order_by(Sessions.starts_at).limit(3)))))
+                "\n".join(map(str, map(SessionOC.get, map(
+                    lambda x: x.ID,
+                    Sessions.select().order_by(Sessions.starts_at).limit(3)
+                ))))
         ))
 
 
 class CinemaOC(BaseOperationController):
-    def __init__(self, model: Model, data=None, **_):
-        if data is None:
-            data = self.__dict__
-        super().__init__(m_type=Cinemas, model=model, data=data)
+    type = Cinemas
 
     @classmethod
     def new(cls):
         data = {"name": input("Введите название кинотеатра: ")}
         new = Cinemas.create(**data)
 
-        return cls(model=new, data=new.__dict__)
+        return cls(model=new, data=new.__dict__.get("dict"))
 
     def __str__(self) -> str:
+        halls = "\n".join(map(str, map(Halls.get, map(lambda x: x.ID, self.model.halls))))
+        if not halls:
+            halls = "В кинотеатре нет залов!"
+
         return (
             "КИНОТЕАТР {}"
-            "\nЗАЛЫ:"
+            "\nЗАЛЫ: "
             "{}".format(
-            self.model.name,
-                "\n".join(map(str, map(Halls.get, map(lambda x: x.ID, self.model.halls))))
+            self.name, halls,
         ))

@@ -1,12 +1,20 @@
+import os
 from argparse import Namespace
+
+from controllers.operation_controller import BaseOperationController, HallOC, CinemaOC, SessionOC
 
 
 class Controller:
     def __init__(self, args: Namespace):
         self.args = args
-        self.cases()
 
-    def cases(self):
+    @staticmethod
+    def clear_console(next_output: str = ""):
+        os.system('cls' if os.name == 'nt' else 'clear')
+        if next_output:
+            print(next_output)
+
+    def execute_cmd(self):
         match self.args:
             case _ as c if c.object is not None:
                 self.execute_operation()
@@ -18,14 +26,24 @@ class Controller:
                 self.analytics()
 
     def execute_operation(self):
+        operator: BaseOperationController = {
+            "cinema": CinemaOC,
+            "hall": HallOC,
+            "session": SessionOC
+        }[self.args.object]
+
         if self.args.create:
-            pass
+            operator.new()
+            self.clear_console(next_output=f"{self.args.object} created!")
 
         if self.args.about:
-            pass
+            o_id = int(input("Введите ID объекта: [int] >> "))
+            self.clear_console(next_output=str(operator.get(o_id)))
 
         if self.args.drop:
-            pass
+            o_id = int(input("Введите ID объекта: [int] >> "))
+            operator.get(o_id).drop()
+            self.clear_console(next_output=f"{self.args.object} dropped!")
 
     def buy(self):
         pass
