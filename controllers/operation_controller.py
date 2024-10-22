@@ -1,25 +1,9 @@
-from peewee import Model
+from peewee import Model, DoesNotExist
 from typing import Any, Self
 from datetime import datetime
 import json
 
 from database.models import Cinemas, Halls
-
-
-class BaseAsk:
-    def __init__(self, data: dict[str, Any]):
-        for k, v in data:
-            self.__dict__[k] = v
-
-    @classmethod
-    def generate(cls) -> Self:
-        data = {}
-
-        return cls(data=data)
-
-    @property
-    def to_dict(self):
-        return self.__dict__
 
 
 class CreateCinemaAsk(BaseAsk):
@@ -57,9 +41,9 @@ class CreateSession(BaseAsk):
 
 
 class BaseOperationController:
-    def __init__(self, db_cls: Model, obj_id: int | None = None, data=None):
-        self.db_cls: Model = db_cls
-        self.obj: Model | None = self[obj_id] if obj_id is not None else None
+    def __init__(self, db_cls: type[Model], o_id: int = -1, data=None):
+        self.db_cls = db_cls
+        self.o_id = o_id
         for k, v in data:
             self.__dict__[k] = v
 
@@ -70,14 +54,34 @@ class BaseOperationController:
     def create(cls) -> Self:
         # data = {}
         #
-        # return cls(db_cls=Model(...), data=data)
+        # return cls(db_cls=Model, data=data)
         raise NotImplemented("not implemented yet.")
+
+    @property
+    def db(self):
+        d = self.__dict__
+        del d["db_cls"]
+        del d["o_id"]
+        return Cinemas.get_or_create(**d)
 
     def drop(self):
-        self.obj.delete_by_id(self.obj.ID)
+        self.db.delete_by_id(self.o_id)
 
-    def config_about(self, sample: str):
+    def config_about(self) -> str:
         raise NotImplemented("not implemented yet.")
 
 
+class CinemaOC(BaseOperationController):
+    @classmethod
+    def create(cls) -> Self:
+        data = {"name": input("Введите название кинотеатра: ")}
 
+        return cls(db_cls=Cinemas, data=data)
+
+    def config_about(self) -> str:
+        return (
+            "КИНОТЕАТР {}"
+            "\nЗАЛЫ:"
+            "{}".format(
+            None, None
+        ))
