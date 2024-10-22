@@ -9,19 +9,33 @@ class Controller:
     def cases(self):
         match self.args:
             case _ as c if c.object is not None:
-                pass
+                self.execute_operation()
 
             case _ as c if c.buy is not None:
-                pass
+                self.buy()
 
             case _ as c if c.schedule is not None:
-                pass
+                self.analytics()
 
     def execute_operation(self):
-        pass
+        if self.args.create:
+            pass
+
+        if self.args.about:
+            pass
+
+        if self.args.drop:
+            pass
 
     def buy(self):
         pass
 
     def analytics(self):
-        pass
+        if self.args.schedule:
+            pass
+
+        if self.args.workload:
+            pass
+
+        if self.args.advertising:
+            pass
