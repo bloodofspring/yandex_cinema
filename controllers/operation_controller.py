@@ -1,23 +1,83 @@
 from peewee import Model
-from controllers.ask_functions import BaseAsk
+from typing import Any, Self
+from datetime import datetime
+import json
+
+from database.models import Cinemas, Halls
 
 
-class OperationController:
-    def __init__(self, cls: Model, obj_id: int | None = None):
-        self.cls: Model = cls
-        self.obj: Model | None = self.get_obj(obj_id ) if obj_id is not None else None
+class BaseAsk:
+    def __init__(self, data: dict[str, Any]):
+        for k, v in data:
+            self.__dict__[k] = v
 
-    def get_obj(self, obj_id: int):
-        return self.cls.get_by_id(obj_id)
+    @classmethod
+    def generate(cls) -> Self:
+        data = {}
 
-    def create(self, ask_f: BaseAsk | None = None, **kwargs):
-        if ask_f:
-            kwargs = ask_f.generate()
+        return cls(data=data)
 
-        self.obj.create(**kwargs.to_dict)
+    @property
+    def to_dict(self):
+        return self.__dict__
+
+
+class CreateCinemaAsk(BaseAsk):
+    @classmethod
+    def generate(cls) -> Self:
+        data = {}
+        data["name"] = input("Введите название кинотеатра: ")
+
+        return cls(data=data)
+
+
+class CreateHall(BaseAsk):
+    @classmethod
+    def generate(cls) -> Self:
+        data = {}
+        data["cinema"] = Cinemas.delete_by_id(int(input("Введите ID кинотеатра, к которому будет прикреплен зал: ")))
+        n, m = map(int, input("Введите размер зала в формате NxN где N - целое положительное число: ").split("x"))
+        data["config_json"] = json.dumps([[False for _ in range(n)] for _ in range(m)])
+
+        return cls(data=data)
+
+
+class CreateSession(BaseAsk):
+    @classmethod
+    def generate(cls) -> Self:
+        data = {}
+        data["film_name"] = input("Введите название фильма: ")
+        data["starts_at"] = datetime.strptime(
+            input("Введите дату и время начала в формате дд/мм/гггг чч:мм: "), "%d/%m/%Y %HH:%MM"
+        )
+        data["duration"] = int(input("Введите длительность фильма (мин): "))
+        data["hall"] = Halls.get(int(input("Введите ID зала, в котором будет проведен сеанс: ")))
+
+        return cls(data=data)
+
+
+class BaseOperationController:
+    def __init__(self, db_cls: Model, obj_id: int | None = None, data=None):
+        self.db_cls: Model = db_cls
+        self.obj: Model | None = self[obj_id] if obj_id is not None else None
+        for k, v in data:
+            self.__dict__[k] = v
+
+    def __getitem__(self, item: int):
+        return self.db_cls.get_by_id(item)
+
+    @classmethod
+    def create(cls) -> Self:
+        # data = {}
+        #
+        # return cls(db_cls=Model(...), data=data)
+        raise NotImplemented("not implemented yet.")
 
     def drop(self):
         self.obj.delete_by_id(self.obj.ID)
 
     def config_about(self, sample: str):
-        pass
+        raise NotImplemented("not implemented yet.")
+
+
+
