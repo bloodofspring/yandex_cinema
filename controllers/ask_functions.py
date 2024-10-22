@@ -16,7 +16,8 @@ class BaseAsk:
 
         return cls(data=data)
 
-    def __call__(self):
+    @property
+    def to_dict(self):
         return self.__dict__
 
 

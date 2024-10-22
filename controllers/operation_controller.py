@@ -12,15 +12,12 @@ class OperationController:
 
     def create(self, ask_f: BaseAsk | None = None, **kwargs):
         if ask_f:
-            kwargs = ask_f.generate()()
+            kwargs = ask_f.generate()
 
-        self.obj.create(**kwargs)
+        self.obj.create(**kwargs.to_dict)
 
     def drop(self):
         self.obj.delete_by_id(self.obj.ID)
-
-    def set_sample(self):
-        pass
 
     def config_about(self, sample: str):
         pass
