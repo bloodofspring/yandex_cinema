@@ -11,8 +11,11 @@ class BaseOperationController:
         self.type = m_type
         self.model = model
 
-        for k, v in data:
+        for k, v in zip(data.keys(), data.values()):
             self.__dict__[k] = v
+
+        del self.__dict__['_dirty']
+        del self.__dict__['__rel__']
 
     def __call__(self, *args, **kwargs):
         return type(self)(*args, **kwargs)
@@ -37,22 +40,24 @@ class BaseOperationController:
 
 
 class SessionOC(BaseOperationController):
-    def __init__(self, model: Model):
-        super().__init__(m_type=Sessions, model=model)
+    def __init__(self, model: Model, data=None, **_):
+        if data is None:
+            data = self.__dict__
+        super().__init__(m_type=Sessions, model=model, data=data)
 
     @classmethod
     def new(cls) -> Self:
         data = {
             "film_name": input("Введите название фильма: "),
             "starts_at": datetime.strptime(
-                input("Введите дату и время начала в формате дд/мм/гггг чч:мм: "), "%d/%m/%Y %HH:%MM"
+                input("Введите дату и время начала в формате дд/мм/гггг чч:мм: "), "%d/%m/%Y %H:%M"
             ),
             "duration": int(input("Введите длительность фильма (мин): ")),
             "hall": Halls.get(int(input("Введите ID зала, в котором будет проведен сеанс: ")))
         }
         new = Sessions.create(**data)
 
-        return cls(model=new)
+        return cls(model=new, data=new.__dict__)
 
     def __str__(self) -> str:
         d = self.__dict__
@@ -69,11 +74,13 @@ class SessionOC(BaseOperationController):
 
 
 class HallOC(BaseOperationController):
-    def __init__(self, model: Model):
-        super().__init__(m_type=Halls, model=model)
+    def __init__(self, model: Model, data=None, **_):
+        if data is None:
+            data = self.__dict__
+        super().__init__(m_type=Halls, model=model, data=data)
 
     @classmethod
-    def create(cls) -> Self:
+    def new(cls) -> Self:
         data = {
             "cinema": Cinemas.delete_by_id(int(input("Введите ID кинотеатра, к которому будет прикреплен зал: ")))
         }
@@ -81,26 +88,29 @@ class HallOC(BaseOperationController):
         data["config_json"] = json.dumps([[False for _ in range(n)] for _ in range(m)])
         new = Halls.create(**data)
 
-        return cls(model=new)
+        return cls(model=new, data=new.__dict__)
 
     def __str__(self) -> str:
         return (
             "ЗАЛ ID={}"
             "\nБлижайшие сеансы: {}".format(
                 self.db.ID,
-                map(str, map(SessionOC.get, map(lambda x: x.ID, Sessions.select().order_by(Sessions.starts_at).desc().limit(3))))
+                "\n".join(map(str, map(SessionOC.get, map(lambda x: x.ID, Sessions.select().order_by(Sessions.starts_at).limit(3)))))
         ))
 
 
 class CinemaOC(BaseOperationController):
-    def __init__(self, model: Model, **_):
-        super().__init__(m_type=Cinemas, model=model)
+    def __init__(self, model: Model, data=None, **_):
+        if data is None:
+            data = self.__dict__
+        super().__init__(m_type=Cinemas, model=model, data=data)
 
     @classmethod
     def new(cls):
         data = {"name": input("Введите название кинотеатра: ")}
         new = Cinemas.create(**data)
-        return cls(model=new)
+
+        return cls(model=new, data=new.__dict__)
 
     def __str__(self) -> str:
         return (
@@ -108,5 +118,5 @@ class CinemaOC(BaseOperationController):
             "\nЗАЛЫ:"
             "{}".format(
             self.model.name,
-                map(str, map(Halls.get, map(lambda x: x.ID, self.model.halls)))
+                "\n".join(map(str, map(Halls.get, map(lambda x: x.ID, self.model.halls))))
         ))
