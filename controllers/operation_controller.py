@@ -7,32 +7,32 @@ from database.models import Cinemas, Halls, Sessions
 
 
 class BaseOperationController:
-    def __init__(self, model: Model, data: dict[str, Any] | None = None):
+    def __init__(self, m_type: type[Model], model: Model, data: dict[str, Any] | None = None) -> None:
+        self.type = m_type
         self.model = model
 
         for k, v in data:
             self.__dict__[k] = v
 
-    @classmethod
-    def get(cls, o_id: int | None = None) -> Self:
-        raise NotImplemented("not implemented yet.")
+    def __call__(self, *args, **kwargs):
+        return type(self)(*args, **kwargs)
 
-    @classmethod
-    def new(cls, o_id: int | None = None) -> Self:
-        raise NotImplemented("not implemented yet.")
+    def get(self, o_id: int | None = None) -> Self:
+        model = self.type.get_by_id(o_id)
+        return self(m_type=self.type, model=model, data=model.__dict__)
 
     @property
     def db(self):
         return self.model
 
     def drop(self):
-        type(self.model).delete_by_id(self.model.ID)
+        self.type.delete_by_id(self.model.ID)
+
+    def new(self) -> Self:
+        raise NotImplemented("not implemented yet.")
 
     def __str__(self) -> str:
         raise NotImplemented("not implemented yet.")
-
-
-
 
 
 
@@ -40,12 +40,16 @@ class BaseOperationController:
 
 class CinemaOC(BaseOperationController):
     @classmethod
-    def create(cls) -> Self:
+    def get(cls, o_id: int | None = None) -> Self:
+        pass
+
+    @classmethod
+    def new(cls):
         data = {"name": input("Введите название кинотеатра: ")}
+        new = Cinemas.
+        return cls()
 
-        return cls(db_cls=Cinemas, data=data)
-
-    def __str__(self) -> str:
+def __str__(self) -> str:
         return (
             "КИНОТЕАТР {}"
             "\nЗАЛЫ:"
