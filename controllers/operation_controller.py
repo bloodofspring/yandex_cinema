@@ -3,7 +3,7 @@ from typing import Any, Self
 from datetime import datetime
 import json
 
-from database.models import Cinemas, Halls
+from database.models import Cinemas, Halls, Sessions
 
 
 class CreateCinemaAsk(BaseAsk):
@@ -84,4 +84,41 @@ class CinemaOC(BaseOperationController):
             "\nЗАЛЫ:"
             "{}".format(
             None, None
+        ))
+
+
+class HallOC(BaseOperationController):
+    @classmethod
+    def create(cls) -> Self:
+        pass
+
+    def config_about(self) -> str:
+        pass
+
+
+class SessionOC(BaseOperationController):
+    @classmethod
+    def create(cls) -> Self:
+        data = {
+            "film_name": input("Введите название фильма: "),
+            "starts_at": datetime.strptime(
+                input("Введите дату и время начала в формате дд/мм/гггг чч:мм: "), "%d/%m/%Y %HH:%MM"
+            ),
+            "duration": int(input("Введите длительность фильма (мин): ")),
+            "hall": Halls.get(int(input("Введите ID зала, в котором будет проведен сеанс: ")))
+        }
+
+        return cls(db_cls=Sessions, data=data)
+
+    def config_about(self) -> str:
+        d = self.__dict__
+        del d["o_id"]
+        del d["db_cls"]
+        del d["hall"]
+
+        return (
+            "СЕАНС НА ФИЛЬМ {}"
+            "\nВремя начала: {}"
+            "\nДлительность: {}".format(
+                *d.values()
         ))
