@@ -1,5 +1,5 @@
 from peewee import Model
-from typing import Self
+from typing import Self, Any
 from datetime import datetime
 import json
 
@@ -7,38 +7,35 @@ from database.models import Cinemas, Halls, Sessions
 
 
 class BaseOperationController:
-    def __init__(self, db_cls: type[Model], o_id: int = -1, data=None):
-        self.db_cls = db_cls
-        self.o_id = o_id
+    def __init__(self, model: Model, data: dict[str, Any] | None = None):
+        self.model = model
+
         for k, v in data:
             self.__dict__[k] = v
 
-    def __getitem__(self, item: int):
-        return self.db_cls.get_by_id(item)
-
     @classmethod
-    def create(cls) -> Self:
-        # data = {}
-        #
-        # return cls(db_cls=Model, data=data)
+    def get(cls, o_id: int | None = None) -> Self:
         raise NotImplemented("not implemented yet.")
 
     @classmethod
-    def de_db(cls, o):
-        return cls(db_cls=Model, data=o.__dict__)
+    def new(cls, o_id: int | None = None) -> Self:
+        raise NotImplemented("not implemented yet.")
 
     @property
     def db(self):
-        d = self.__dict__
-        del d["db_cls"]
-        del d["o_id"]
-        return Cinemas.get_or_create(**d)
+        return self.model
 
     def drop(self):
-        self.db.delete_by_id(self.o_id)
+        type(self.model).delete_by_id(self.model.ID)
 
     def __str__(self) -> str:
         raise NotImplemented("not implemented yet.")
+
+
+
+
+
+
 
 
 class CinemaOC(BaseOperationController):
