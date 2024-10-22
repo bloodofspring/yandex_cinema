@@ -1,43 +1,9 @@
-from peewee import Model, DoesNotExist
-from typing import Any, Self
+from peewee import Model
+from typing import Self
 from datetime import datetime
 import json
 
 from database.models import Cinemas, Halls, Sessions
-
-
-class CreateCinemaAsk(BaseAsk):
-    @classmethod
-    def generate(cls) -> Self:
-        data = {}
-        data["name"] = input("Введите название кинотеатра: ")
-
-        return cls(data=data)
-
-
-class CreateHall(BaseAsk):
-    @classmethod
-    def generate(cls) -> Self:
-        data = {}
-        data["cinema"] = Cinemas.delete_by_id(int(input("Введите ID кинотеатра, к которому будет прикреплен зал: ")))
-        n, m = map(int, input("Введите размер зала в формате NxN где N - целое положительное число: ").split("x"))
-        data["config_json"] = json.dumps([[False for _ in range(n)] for _ in range(m)])
-
-        return cls(data=data)
-
-
-class CreateSession(BaseAsk):
-    @classmethod
-    def generate(cls) -> Self:
-        data = {}
-        data["film_name"] = input("Введите название фильма: ")
-        data["starts_at"] = datetime.strptime(
-            input("Введите дату и время начала в формате дд/мм/гггг чч:мм: "), "%d/%m/%Y %HH:%MM"
-        )
-        data["duration"] = int(input("Введите длительность фильма (мин): "))
-        data["hall"] = Halls.get(int(input("Введите ID зала, в котором будет проведен сеанс: ")))
-
-        return cls(data=data)
 
 
 class BaseOperationController:
@@ -57,6 +23,10 @@ class BaseOperationController:
         # return cls(db_cls=Model, data=data)
         raise NotImplemented("not implemented yet.")
 
+    @classmethod
+    def de_db(cls, o):
+        return cls(db_cls=Model, data=o.__dict__)
+
     @property
     def db(self):
         d = self.__dict__
@@ -67,7 +37,7 @@ class BaseOperationController:
     def drop(self):
         self.db.delete_by_id(self.o_id)
 
-    def config_about(self) -> str:
+    def __str__(self) -> str:
         raise NotImplemented("not implemented yet.")
 
 
@@ -78,22 +48,33 @@ class CinemaOC(BaseOperationController):
 
         return cls(db_cls=Cinemas, data=data)
 
-    def config_about(self) -> str:
+    def __str__(self) -> str:
         return (
             "КИНОТЕАТР {}"
             "\nЗАЛЫ:"
             "{}".format(
-            None, None
+            self.name, None
         ))
 
 
 class HallOC(BaseOperationController):
     @classmethod
     def create(cls) -> Self:
-        pass
+        data = {
+            "cinema": Cinemas.delete_by_id(int(input("Введите ID кинотеатра, к которому будет прикреплен зал: ")))
+        }
+        n, m = map(int, input("Введите размер зала в формате NxN где N - целое положительное число: ").split("x"))
+        data["config_json"] = json.dumps([[False for _ in range(n)] for _ in range(m)])
 
-    def config_about(self) -> str:
-        pass
+        return cls(db_cls=Halls, data=data)
+
+    def __str__(self) -> str:
+        return (
+            "ЗАЛ ID={}"
+            "\nБлижайшие сеансы: {}".format(
+                self.db.ID,
+                map(str, map(SessionOC.de_db, Sessions.select().order_by(Sessions.starts_at).desc().limit(3)))
+        ))
 
 
 class SessionOC(BaseOperationController):
@@ -110,7 +91,11 @@ class SessionOC(BaseOperationController):
 
         return cls(db_cls=Sessions, data=data)
 
-    def config_about(self) -> str:
+    @classmethod
+    def de_db(cls, o):
+        return cls(db_cls=Sessions, data=o.__dict__)
+
+    def __str__(self) -> str:
         d = self.__dict__
         del d["o_id"]
         del d["db_cls"]
