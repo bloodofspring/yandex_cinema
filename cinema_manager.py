@@ -22,7 +22,7 @@ def main():
     analytics.add_argument('-wl', '--workload', help="Загруженность в .xlsx (передавать ничего не надо)")
     analytics.add_argument('-ads', '--advertising', help="Реклама в .pptx (передавать ничего не надо)")
 
-    args = parser.parse_args()
+    args: Namespace = parser.parse_args()
 
 
 if __name__ == "__main__":
