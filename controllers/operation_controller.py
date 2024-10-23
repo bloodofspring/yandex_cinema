@@ -1,13 +1,15 @@
-from peewee import Model
-from typing import Self, Any
-from datetime import datetime
 import json
+from datetime import datetime
+from typing import Self, Any
+
+from peewee import Model
 
 from database.models import Cinemas, Halls, Sessions
 
 
 class BaseOperationController:
     type: Model | None = None
+
     def __init__(self, model: Model, data: dict[str, Any] | None = None) -> None:
         self.model = model
 
@@ -64,7 +66,7 @@ class SessionOC(BaseOperationController):
             "\nДлительность: {} минут"
             "\nID зала: {}".format(
                 self.film_name, self.starts_at, self.duration, Halls(ID=self.hall).ID
-        ))
+            ))
 
 
 class HallOC(BaseOperationController):
@@ -85,7 +87,8 @@ class HallOC(BaseOperationController):
         now = datetime.now()
         near_sessions = "\n".join(map(str, map(SessionOC.get, map(
             lambda x: x.ID,
-            Sessions.select().where(self == Sessions.hall & Sessions.starts_at >= now).order_by(Sessions.starts_at).limit(3)
+            Sessions.select().where(self == Sessions.hall & Sessions.starts_at >= now).order_by(
+                Sessions.starts_at).limit(3)
         ))))
         if not near_sessions:
             near_sessions = f"В зале {self.ID} не запланировано сеансов!"
@@ -95,7 +98,7 @@ class HallOC(BaseOperationController):
             "\nБлижайшие сеансы: {}".format(
                 self.db.ID,
                 near_sessions
-        ))
+            ))
 
 
 class CinemaOC(BaseOperationController):
@@ -117,5 +120,5 @@ class CinemaOC(BaseOperationController):
             "КИНОТЕАТР {}"
             "\nЗАЛЫ: "
             "{}".format(
-            self.name, halls,
-        ))
+                self.name, halls,
+            ))

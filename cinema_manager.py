@@ -23,7 +23,6 @@ def main():
 
     # for analytics
     analytics = parser.add_argument_group("Analytics")
-    analytics.add_argument('-s', '--schedule', help="Расписание фильмов в .docx")
     analytics.add_argument('-wl', '--workload', help="Загруженность в .xlsx")
     analytics.add_argument('-ads', '--advertising', help="Реклама в .pptx")
 
