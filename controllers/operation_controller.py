@@ -36,6 +36,9 @@ class BaseOperationController:
     def __str__(self) -> str:
         raise NotImplemented("not implemented yet.")
 
+    def __eq__(self, other: Model):
+        return self.model == other
+
 
 class SessionOC(BaseOperationController):
     type = Sessions
@@ -52,7 +55,7 @@ class SessionOC(BaseOperationController):
         }
         new = Sessions.create(**data)
 
-        return cls(model=new, data=new.__dict__.get("dict"))
+        return cls(model=new, data=new.__dict__.get("__data__"))
 
     def __str__(self) -> str:
         return (
@@ -76,17 +79,22 @@ class HallOC(BaseOperationController):
         data["config_json"] = json.dumps([[False for _ in range(n)] for _ in range(m)])
         new = Halls.create(**data)
 
-        return cls(model=new, data=new.__dict__.get("__dict__"))
+        return cls(model=new, data=new.__dict__.get("__data__"))
 
     def __str__(self) -> str:
+        now = datetime.now()
+        near_sessions = "\n".join(map(str, map(SessionOC.get, map(
+            lambda x: x.ID,
+            Sessions.select().where(self == Sessions.hall & Sessions.starts_at >= now).order_by(Sessions.starts_at).limit(3)
+        ))))
+        if not near_sessions:
+            near_sessions = f"В зале {self.ID} не запланировано сеансов!"
+
         return (
             "ЗАЛ ID={}"
             "\nБлижайшие сеансы: {}".format(
                 self.db.ID,
-                "\n".join(map(str, map(SessionOC.get, map(
-                    lambda x: x.ID,
-                    Sessions.select().order_by(Sessions.starts_at).limit(3)
-                ))))
+                near_sessions
         ))
 
 
@@ -98,7 +106,7 @@ class CinemaOC(BaseOperationController):
         data = {"name": input("Введите название кинотеатра: ")}
         new = Cinemas.create(**data)
 
-        return cls(model=new, data=new.__dict__.get("dict"))
+        return cls(model=new, data=new.__dict__.get("__data__"))
 
     def __str__(self) -> str:
         halls = "\n".join(map(str, map(Halls.get, map(lambda x: x.ID, self.model.halls))))
