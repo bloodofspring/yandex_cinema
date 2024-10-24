@@ -8,7 +8,7 @@ def handle_broad_exception(exception: Any, **custom_exceptions: tuple[type[Excep
     for cust in custom_exceptions.values():
         exception_, message = cust
         color = cust[2] if len(cust) > 2 else colorama.Fore.LIGHTRED_EX
-        if not isinstance(exception_(), exception.__class__):
+        if not isinstance(exception_(), type(exception)):
             continue
 
         print(color + message)
@@ -37,7 +37,7 @@ def exception_handler(
                     if default_message:
                         print(default_message)
                 else:
-                    print(colorama.Fore.LIGHTRED_EX + str(error))
+                    print(colorama.Fore.LIGHTRED_EX + f"{type(error)} + {error}")
 
                 return False
 

@@ -1,9 +1,12 @@
 import os
 from argparse import Namespace
 
+from peewee import DoesNotExist
+
 from controllers.analytics_controller import AnalyticsController
 from controllers.buy_controller import BuyController
 from controllers.operation_controller import BaseOperationController, HallOC, CinemaOC, SessionOC
+from exceptions.handlers import exception_handler
 
 
 class Controller:
@@ -16,6 +19,11 @@ class Controller:
         if next_output:
             print(next_output)
 
+    @exception_handler(
+        ignore_broad_exceptions=False,
+        not_found=(DoesNotExist, "Указан неверный ID объекта!"),
+        value_error=(ValueError, "Неверный формат ввода!")
+    )
     def execute_cmd(self):
         match self.args:
             case _ as c if c.object is not None:
