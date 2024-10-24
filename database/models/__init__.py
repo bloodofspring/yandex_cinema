@@ -1,4 +1,4 @@
-from .analytics import SoldTickets, Ads
+from .analytics import SoldTickets
 from .sessions import Sessions
 from .cinemas import Cinemas, Halls
 
@@ -9,5 +9,4 @@ active_models = [
     Sessions,
 
     SoldTickets,
-    Ads
 ]

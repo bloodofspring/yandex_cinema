@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from datetime import datetime
 
 from matplotlib import pyplot
@@ -5,6 +6,7 @@ from numpy import array
 import itertools
 
 from controllers.operation_controller import CinemaOC, SessionOC
+from database.models import SoldTickets
 
 
 class GotData:
@@ -20,23 +22,36 @@ class AnalyticsController:
         sessions = list(itertools.chain(map(lambda x: x.sessions, cin.model.halls)))
         return GotData(cinema=cin, sessions=sessions)
 
+    @staticmethod
+    def build_pyplot(title: str, xlabel: str, ylabel: str, data: Iterable[int], file_name: str) -> str:
+        pyplot.title(title)
+        pyplot.xlabel(xlabel)
+        pyplot.ylabel(ylabel)
+
+        pyplot.minorticks_on()
+        pyplot.grid(visible=True)
+
+        arr = array(data)
+        pyplot.plot(arr, color="black")
+
+        pyplot.savefig(file_name)
+
+        return file_name
+
+
     def buy_stats(self) -> str:
         d = self.get_data()
         an_data = d.sessions[-50:]
 
-        pyplot.title(f"Загруженность кинотеатра {d.cinema.name}")
-        pyplot.ylabel("Количество купленных билетов")
-        pyplot.xlabel(f"День (1: {an_data[0].sold_tickets} -> {len(an_data)}: {an_data[-1].sold_tickets})")
-        pyplot.minorticks_on()
-        pyplot.grid(visible=True)
+        return self.build_pyplot(
+            title=f"Загруженность кинотеатра {d.cinema.name}",
+            xlabel=f"День (1: {an_data[0].sold_tickets} -> {len(an_data)}: {an_data[-1].sold_tickets})",
+            ylabel="Количество купленных билетов",
+            data=map(lambda x: len(SoldTickets.select().where(SoldTickets.session == x)), an_data),
+            file_name=f"{d.cinema.name}_analytics_{str(datetime.now()).replace(' ', '_').replace('.', '')}"
+        )
 
-        arr = array(an_data)
-        pyplot.plot(arr, color="black")
+    def session_stats(self) -> str:
+        d = self.get_data()
 
-        name = f"{d.cinema.name}_analytics_{str(datetime.now()).replace(' ', '_').replace('.', '')}"
-        pyplot.savefig(name)
-
-        return name  # Вернуть имя фала с графиком
-
-    def ads_pptx(self) -> str:
         return "" # Вернуть имя фала с презентацией
