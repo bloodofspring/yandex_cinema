@@ -2,6 +2,7 @@ import os
 from argparse import Namespace
 
 from controllers.analytics_controller import AnalyticsController
+from controllers.buy_controller import BuyController
 from controllers.operation_controller import BaseOperationController, HallOC, CinemaOC, SessionOC
 
 
@@ -21,7 +22,7 @@ class Controller:
                 self.execute_operation()
 
             case _ as c if c.buy is not None:
-                self.buy()
+                BuyController()()
 
             case _ as c if c.schedule is not None:
                 self.analytics()
@@ -45,9 +46,6 @@ class Controller:
             o_id = int(input("Введите ID объекта: [int] >> "))
             operator.get(o_id).drop()
             self.clear_console(next_output=f"{self.args.object} dropped!")
-
-    def buy(self):
-        pass
 
     def analytics(self):
         if self.args.workload:

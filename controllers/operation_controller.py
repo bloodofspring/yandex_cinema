@@ -48,7 +48,7 @@ class SessionOC(BaseOperationController):
     @classmethod
     def new(cls) -> Self:
         data = {
-            "film_name": input("Введите название фильма: "),
+            "film_name": input("Введите название фильма: ").strip().lower(),
             "starts_at": datetime.strptime(
                 input("Введите дату и время начала в формате дд/мм/гггг чч:мм: "), "%d/%m/%Y %H:%M"
             ),
@@ -75,10 +75,10 @@ class HallOC(BaseOperationController):
     @classmethod
     def new(cls) -> Self:
         data = {
-            "cinema": Cinemas.delete_by_id(int(input("Введите ID кинотеатра, к которому будет прикреплен зал: ")))
+            "cinema": Cinemas.get_by_id(int(input("Введите ID кинотеатра, к которому будет прикреплен зал: ")))
         }
         n, m = map(int, input("Введите размер зала в формате NxN где N - целое положительное число: ").split("x"))
-        data["config_json"] = json.dumps([[False for _ in range(n)] for _ in range(m)])
+        data["config_json"] = json.dumps([[True for _ in range(n)] for _ in range(m)])
         new = Halls.create(**data)
 
         return cls(model=new, data=new.__dict__.get("__data__"))
