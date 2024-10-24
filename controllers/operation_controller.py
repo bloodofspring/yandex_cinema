@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from typing import Self, Any
+from colorama import Fore, init
 
 from peewee import Model
 
@@ -28,8 +29,19 @@ class BaseOperationController:
     def db(self):
         return self.model
 
+    def show_drop_warning(self):
+        init(autoreset=True)
+        print(Fore.LIGHTYELLOW_EX + "Внимание! Все объекты, привязанные к данному, пропадут!")
+
+        if input("Вы уверены, что хотите продолжить процесс удаления? [Y/n]: >> ") != "Y":
+            print(f"Удаление объекта {self.model} отменено!")
+            return False
+
+        return True
+
     def drop(self):
-        self.type.delete_by_id(self.ID)
+        if self.show_drop_warning():
+            self.type.delete_by_id(self.ID)
 
     @classmethod
     def new(cls) -> Self:
@@ -83,6 +95,16 @@ class HallOC(BaseOperationController):
 
         return cls(model=new, data=new.__dict__.get("__data__"))
 
+    def drop(self):
+        if not self.show_drop_warning():
+            return
+
+        sessions = self.model.sessions
+        for session in sessions:
+            Sessions.delete_by_id(session.ID)
+
+        self.type.delete_by_id(self.ID)
+
     def __str__(self) -> str:
         now = datetime.now()
         near_sessions = "\n".join(map(str, map(SessionOC.get, map(
@@ -110,6 +132,20 @@ class CinemaOC(BaseOperationController):
         new = Cinemas.create(**data)
 
         return cls(model=new, data=new.__dict__.get("__data__"))
+
+    def drop(self):
+        if not self.show_drop_warning():
+            return
+
+        halls = self.model.halls
+        for hall in halls:
+            sessions = hall.sessions
+            for session in sessions:
+                Sessions.delete_by_id(session.ID)
+
+            Halls.delete_by_id(hall.ID)
+
+        self.type.delete_by_id(self.ID)
 
     def __str__(self) -> str:
         halls = "\n".join(map(str, map(Halls.get, map(lambda x: x.ID, self.model.halls))))
