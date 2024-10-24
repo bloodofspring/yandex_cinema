@@ -37,7 +37,7 @@ def exception_handler(
                     if default_message:
                         print(default_message)
                 else:
-                    print(colorama.Fore.LIGHTRED_EX + f"{type(error)} + {error}")
+                    print(colorama.Fore.LIGHTRED_EX + f"{type(error)}: {error}")
 
                 return False
 

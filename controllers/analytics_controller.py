@@ -1,4 +1,4 @@
-from collections.abc import Iterable
+import os.path
 from datetime import datetime
 
 from matplotlib import pyplot
@@ -25,10 +25,10 @@ class AnalyticsController:
     @staticmethod
     def get_data() -> GotData:
         cin = CinemaOC.get(int(input("Введите ID кинотеатра для построения аналитики: ")))
-        sessions = list(itertools.chain(map(lambda x: x.sessions, cin.model.halls)))
+        sessions = list(itertools.chain(*map(lambda x: x.sessions[:], cin.model.halls)))
         return GotData(cinema=cin, sessions=sessions)
 
-    def build_pyplot(self, title: str, data: Iterable[int], file_name: str = "", xlabel: str = "", ylabel: str = "") -> str:
+    def build_pyplot(self, title: str, data: tuple, file_name: str = "", xlabel: str = "", ylabel: str = "") -> str:
         pyplot.title(title)
 
         if xlabel:
@@ -46,21 +46,29 @@ class AnalyticsController:
         if not file_name:
             file_name = self.default_file_name
 
-        pyplot.savefig(file_name)
+        if not os.path.exists("statistics"):
+            os.mkdir("statistics")
+
+        pyplot.savefig(f"statistics/{file_name}")
 
         return file_name
 
 
     def buy_stats(self) -> str:
-        d = self.get_data()
-        build_data = d.sessions[-50:]
+        build_data = self.data.sessions[-50:]
+        if not build_data:
+            raise Exception("У данного кинотеатра нет залов!")
 
         return self.build_pyplot(
-            title=f"Загруженность кинотеатра {d.cinema.name}",
-            xlabel=f"День (1: {build_data[0].sold_tickets} -> {len(build_data)}: {build_data[-1].sold_tickets})",
+            title=f"Загруженность кинотеатра {self.data.cinema.name}",
+            xlabel=(
+                f"День 1: продано {len(build_data[0].sold_tickets)}  "
+                ">>----->  "
+                f"День {len(build_data)}: продано {len(build_data[-1].sold_tickets)}"
+            ),
             ylabel="Количество купленных билетов",
-            data=map(lambda x: len(SoldTickets.select().where(SoldTickets.session == x)), build_data),
+            data=tuple(map(lambda x: len(SoldTickets.select().where(SoldTickets.session == x)), build_data)),
         )
 
     def session_stats(self) -> str:
-        pass  # coming soon
+        raise Exception("Данный метод будет реализован в следующей версии!")

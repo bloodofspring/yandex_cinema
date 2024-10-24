@@ -6,7 +6,7 @@ from peewee import DoesNotExist
 from controllers.analytics_controller import AnalyticsController
 from controllers.buy_controller import BuyController
 from controllers.operation_controller import BaseOperationController, HallOC, CinemaOC, SessionOC
-from exceptions.handlers import exception_handler
+from exceptions import exception_handler
 
 
 class Controller:
@@ -19,11 +19,10 @@ class Controller:
         if next_output:
             print(next_output)
 
-    @exception_handler(
-        ignore_broad_exceptions=False,
-        not_found=(DoesNotExist, "Указан неверный ID объекта!"),
-        value_error=(ValueError, "Неверный формат ввода!")
-    )
+    # @exception_handler(
+    #     not_found=(DoesNotExist, "Указан неверный ID объекта!"),
+    #     value_error=(ValueError, "Неверный формат ввода!")
+    # )
     def execute_cmd(self):
         match self.args:
             case _ as c if c.object is not None:
@@ -32,7 +31,7 @@ class Controller:
             case _ as c if c.buy is not None:
                 BuyController()()
 
-            case _ as c if c.schedule is not None:
+            case _ as c if c.workload is not None or c.advertising is not None:
                 self.analytics()
 
     def execute_operation(self):
@@ -57,7 +56,6 @@ class Controller:
 
     def analytics(self):
         if self.args.workload:
-            self.clear_console(next_output="Загружаем графики...")
             self.clear_console(next_output=f"График построен! Файл: {AnalyticsController().buy_stats()}")
 
         if self.args.advertising:
