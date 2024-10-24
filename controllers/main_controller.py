@@ -1,6 +1,7 @@
 import os
 from argparse import Namespace
 
+from controllers.analytics_controller import AnalyticsController
 from controllers.operation_controller import BaseOperationController, HallOC, CinemaOC, SessionOC
 
 
@@ -49,11 +50,9 @@ class Controller:
         pass
 
     def analytics(self):
-        if self.args.schedule:
-            pass
-
         if self.args.workload:
-            pass
+            self.clear_console(next_output="Загружаем графики...")
+            self.clear_console(next_output=f"График построен! Файл: {AnalyticsController().buy_stats()}")
 
         if self.args.advertising:
-            pass
+            self.clear_console("Данная операция еще не добавлена! (будет реализована в следующем обновлении)")

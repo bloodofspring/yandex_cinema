@@ -63,4 +63,4 @@ class AnalyticsController:
         )
 
     def session_stats(self) -> str:
-        return "None"  # coming soon
+        pass  # coming soon

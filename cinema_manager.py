@@ -24,7 +24,7 @@ def main():
     # for analytics
     analytics = parser.add_argument_group("Analytics")
     analytics.add_argument('-wl', '--workload', help="Загруженность в .xlsx")
-    analytics.add_argument('-ads', '--advertising', help="Реклама в .pptx")
+    analytics.add_argument('-ads', '--advertising', help="Реклама в .pptx (coming in the next update)")
 
     args: Namespace = parser.parse_args()
     Controller(args=args).execute_cmd()
