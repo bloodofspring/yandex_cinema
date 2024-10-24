@@ -19,10 +19,10 @@ class Controller:
         if next_output:
             print(next_output)
 
-    # @exception_handler(
-    #     not_found=(DoesNotExist, "Указан неверный ID объекта!"),
-    #     value_error=(ValueError, "Неверный формат ввода!")
-    # )
+    @exception_handler(
+        not_found=(DoesNotExist, "Указан неверный ID объекта!"),
+        value_error=(ValueError, "Неверный формат ввода!")
+    )
     def execute_cmd(self):
         match self.args:
             case _ as c if c.object is not None:
