@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-from database.models import Sessions, Halls
+from database.models import Sessions, Halls, SoldTickets
 from exceptions import FilmIsNotInCinema, PlaceIsTaken
 
 
@@ -72,7 +72,12 @@ class BuyController:
 
         return cinema
 
+    @staticmethod
+    def log_transaction(session: Sessions):
+        SoldTickets.create(session=session)
+
     def finalize_buy(self, conf, cinema, xpos, ypos):
+        self.log_transaction(session=cinema["session"])
         conf[ypos][xpos] = False
         cinema['hall'].config_json = json.dumps(conf)
         Halls.save(cinema['hall'])
